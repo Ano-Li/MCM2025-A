@@ -1,12 +1,13 @@
 clear, clc;
+
 % 台阶尺寸
 Lx = 1; % 台阶宽度 (m) -> 对应脚的长度（y方向）
 Ly = 0.3; % 台阶长度 (m) -> 对应脚的宽度（x方向）
-Lz = 0.5; % 台阶初始高度 (m)
+Lz = 0.2; % 台阶初始高度 (m)
 
 % 台阶使用年限和踩踏频率
 T = 300 * 365; % 台阶年限为300年
-f = 20; % 每天的踩踏频率为20次
+f = 10; % 每天的踩踏频率
 
 % 脚踩区域尺寸（椭圆参数）
 L_foot = 0.25; % 脚的长度 (m)
@@ -15,21 +16,30 @@ a = L_foot / 2; % 椭圆的长轴半径
 b = W_foot / 2; % 椭圆的短轴半径
 
 % 材料硬度
-H = 2e9; % 硬度 (Pa)，如大理石
+H = 5e10; % 硬度 (Pa)
 
 % 摩擦系数范围
-k_min = 0.2; % 脚尖处摩擦系数
-k_max = 0.8; % 脚跟处摩擦系数
+k_min = 0.02; % 脚尖处摩擦系数
+k_max = 0.08; % 脚跟处摩擦系数
 
 % 压力和滑动距离
-P = 100; % 压力 (N/m^2)
+P = 30000; % 压力 (N/m^2)
 Delta_s = 0.01; % 滑动距离 (m)
 
-% 非线性控制参数
-n = 2; % 非线性程度控制
+% 高斯分布参数
+% x方向双高斯分布
+mu_x1 = -0.2; % 双高斯路径1中心
+mu_x2 = 0.2; % 双高斯路径2中心
+sigma_x1 = 0.1; % 路径1的标准差
+sigma_x2 = 0.1; % 路径2的标准差
+weight1 = 0.5; %  权重
+
+% y方向单高斯分布
+mu_y = -Ly / 2 + L_foot; % 高斯分布中心 (y方向)
+sigma_y = 0.03; % 高斯分布标准差 (y方向)
 
 % 上下行比例
-alpha_values = [1, 0, 0.7, 0.5]; % 上行比例数组
+alpha_values = [1, 0]; % 上行比例数组
 
 % 网格划分
 Nx = 100; % x方向网格数
@@ -41,80 +51,87 @@ x = linspace(-Lx/2, Lx/2, Nx); % 台阶长度方向 -> 脚的宽度方向
 % 初始化台阶高度矩阵
 H_step = Lz * ones(Ny, Nx); % 台阶初始高度
 
-% 双高斯分布参数（x方向）
-mu_x1 = -0.2;    % 第一条路径的中心位置
-mu_x2 = 0.2;     % 第二条路径的中心位置
-sigma_x1 = 0.1;  % 第一条路径的标准差
-sigma_x2 = 0.1;  % 第二条路径的标准差
-weight1 = 0.6;   % 第一条路径的权重
-weight2 = 0.4;   % 第二条路径的权重
+% 记录所有子图的高度范围
+min_height = 0;
+max_height = Lz;
 
-% \(y\) 方向随机扰动参数
-mu_y = -Ly / 2 + L_foot; % 脚掌中心在 \(y\) 方向的初始位置
-sigma_y = 0.05;          % \(y\) 方向的随机扰动幅度
+% 模拟脚踩行为
+num_steps = 1000; % 脚踩次数
 
-% 绘制热图
 figure('Position', [100, 100, 1200, 800]);
 for idx = 1:length(alpha_values)
     alpha = alpha_values(idx); % 当前上行比例
     H_step = Lz * ones(Ny, Nx); % 重置台阶初始高度
 
-    % 计算多次磨损叠加效果
-    W_total = zeros(Ny, Nx); % 初始化磨损分布矩阵
-    num_steps = 1000; % 模拟多次脚踩叠加
     for step = 1:num_steps
-        % 当前脚踩位置的随机扰动 (x方向服从双高斯分布)
+        % x方向双高斯分布
         if rand < weight1
-            foot_center_x = normrnd(mu_x1, sigma_x1); % 第一条路径的随机脚踩位置
+            foot_center_x = normrnd(mu_x1, sigma_x1); % 路径1位置
         else
-            foot_center_x = normrnd(mu_x2, sigma_x2); % 第二条路径的随机脚踩位置
+            foot_center_x = normrnd(mu_x2, sigma_x2); % 路径2位置
         end
 
-        % \(y\) 方向随机扰动
-        foot_center_y = normrnd(mu_y, sigma_y); % 在 \(y\) 方向加入随机性
+        % y方向单高斯分布
+        foot_center_y = normrnd(mu_y, sigma_y); % y方向位置
 
-        for ix = 1:Nx
-            for iy = 1:Ny
-                % 判断当前位置是否在台阶区域内
-                if abs(y(iy)) <= Ly/2 && abs(x(ix)) <= Lx/2
-                    % 判断当前位置是否在椭圆区域内
-                    if ((x(ix) - foot_center_x)^2 / b^2 + (y(iy) - foot_center_y)^2 / a^2) <= 1
-                        % 非线性摩擦系数分布（基于y方向）
-                        f_y = (y(iy) - foot_center_y + a) / (2 * a); % 椭圆y方向归一化位置
+        % 计算相对位置和椭圆掩码
+        X_rel = X - foot_center_x; % x方向相对位置
+        Y_rel = Y - foot_center_y; % y方向相对位置
+        ellipse_mask = (X_rel.^2 / b^2 + Y_rel.^2 / a^2) <= 1; % 椭圆区域掩码
 
-                        % 上行与下行的摩擦系数
-                        k_up = k_min + (k_max - k_min) * f_y; % 上行模式
-                        k_down = k_max + (k_min - k_max) * f_y; % 下行模式
+        % 计算摩擦系数（非线性变化）
+        f_y = (Y_rel + a) / (2 * a); % y方向归一化
+        k_up = k_min + (k_max - k_min) * f_y; % 上行摩擦系数
+        k_down = k_max + (k_min - k_max) * f_y; % 下行摩擦系数
 
-                        % 综合摩擦系数
-                        k_total = alpha * k_up + (1 - alpha) * k_down;
+        % 计算磨损量
+        wear = k_up .* P * Delta_s * alpha * f * T / H + ...
+               k_down .* P * Delta_s * (1 - alpha) * f * T / H;
 
-                        % 计算当前磨损量
-                        wear = k_total * P * Delta_s * f * T / H; % 每次脚踩累积磨损量
-
-                        % 更新磨损分布
-                        W_total(iy, ix) = W_total(iy, ix) + wear;
-
-                        % 更新台阶高度（减去磨损量）
-                        H_step(iy, ix) = H_step(iy, ix) - wear;
-                        H_step(iy, ix) = max(H_step(iy, ix), 0); % 确保高度非负
-                    end
-                end
-            end
-        end
+        % 更新台阶高度
+        H_step = H_step - wear .* ellipse_mask;
     end
+
+    % 确保台阶高度非负
+    H_step = max(H_step, 0);
+
+    % 更新高度范围
+    min_height = min(min_height, min(H_step(:)));
+    max_height = max(max_height, max(H_step(:)));
+
+    % 自定义颜色图，将最高值设置为大理石颜色
+    custom_colormap = parula(256);
+    marble_color = [0.9, 0.9, 0.9]; % 浅灰色
+    custom_colormap(end, :) = marble_color;
 
     % 绘制凹陷效果的3D图
     subplot(2, 2, idx);
-    surf(X, Y, H_step); % 使用 surf 绘制3D图
+    surf(X, Y, H_step);
     colorbar;
-    caxis([0 Lz]); % 颜色范围与初始高度匹配
-    title(['Upward Ratio: ', num2str(alpha)]); % 英文标题
-    xlabel('Step Length  (m)'); % 对应脚宽方向
-    ylabel('Step Width  (m)'); % 对应脚长方向
-    zlabel('Step Height (m)'); % 对应台阶高度
-    axis tight; % 缩放坐标轴范围至有效数据区域
+    caxis([min_height, max_height]);
+    shading interp;
+    colormap(custom_colormap);
+    title(['Upward Ratio: ', num2str(alpha)]);
+    xlabel('Step Length (m)');
+    ylabel('Step Width (m)');
+    zlabel('Step Height (m)');
+    axis tight;
     axis equal;
-    zlim([0,0.5]);
-    view(135,30); % 设置为3D视图
+    zlim([0, Lz]);
+    view(135, 30);
+    
+    subplot(2, 2, idx+2);
+    surf(X, Y, H_step);
+    colorbar;
+    caxis([min_height, max_height]);
+    shading interp;
+    colormap(custom_colormap);
+    title(['Upward Ratio: ', num2str(alpha)]);
+    xlabel('Step Length (m)');
+    ylabel('Step Width (m)');
+    zlabel('Step Height (m)');
+    axis tight;
+    axis equal;
+    zlim([0, Lz]);
+    view(0, 270);
 end
