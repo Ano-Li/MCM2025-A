@@ -6,7 +6,7 @@ import numpy as np
 import open3d as o3d
 import os
 
-vertices_path = "/Users/ano/Library/CloudStorage/OneDrive-个人/文件/事件/硕士研究生文档/数学建模/MCM-2025/真实数据/old-stairs-1/stairs-06/Vertices.txt"
+vertices_path = "/Users/ano/Library/CloudStorage/OneDrive-个人/文件/事件/硕士研究生文档/数学建模/MCM-2025/真实数据/stairs-of-the-17th-century/stairs-05/Vertices.txt"
 dirpath = os.path.dirname(vertices_path)
 parent_dir = os.path.basename(dirpath)
 grandparent_dir = os.path.basename(os.path.dirname(dirpath))
@@ -82,7 +82,7 @@ print("Min Z after filtering =", z1)
 # %%
 # 6. 构造规则网格 (xq, yq)
 x_vals = pts_filtered[:, 0]
-y_vals = pts_filtered[:, 2]
+y_vals = pts_filtered[:, 1]
 xmin, xmax = x_vals.min(), x_vals.max()
 ymin, ymax = y_vals.min(), y_vals.max()
 
@@ -110,7 +110,7 @@ Xq, Yq = np.meshgrid(
 from scipy.interpolate import griddata
 Z_worn = griddata(
     (x_vals, y_vals),         # 已过滤点云的 (x, y)
-    pts_filtered[:, 1],       # 已过滤点云的 z
+    pts_filtered[:, 2]*10,       # 已过滤点云的 z
     (Xq, Yq),
     method='linear'
 )
@@ -152,7 +152,6 @@ if Wear is not None:
     # plt.ylabel("Y")
     # plt.show()
 
-    # np.save("wear_matrix.npy", Wear)
     scipy.io.savemat(mat_path, {"Wear": Wear})
 
 
