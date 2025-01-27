@@ -6,7 +6,7 @@ import numpy as np
 import open3d as o3d
 import os
 
-vertices_path = "/Users/ano/Library/CloudStorage/OneDrive-个人/文件/事件/硕士研究生文档/数学建模/MCM-2025/真实数据/stairs-of-the-17th-century/stairs-05/Vertices.txt"
+vertices_path = "/Users/ano/Library/CloudStorage/OneDrive-个人/文件/事件/硕士研究生文档/数学建模/MCM-2025/真实数据/old-stairs-1/stairs-01/Vertices.txt"
 dirpath = os.path.dirname(vertices_path)
 parent_dir = os.path.basename(dirpath)
 grandparent_dir = os.path.basename(os.path.dirname(dirpath))
