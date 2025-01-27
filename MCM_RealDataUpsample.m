@@ -7,7 +7,7 @@ for idx = 1:5
 
     % 归一化 Wear 数据
     Wear = Wear - min(Wear, [], 'all'); % 将 Wear 的最小值调整为 0
-    Wear_upsample = imresize(Wear, 4*3/2);
+    Wear_upsample = imresize(Wear, 3/2);
     Wmax = max(max(Wear));
     % 计算磨损体积
     W_measured = sum(Wear, 'all') * 1e-9; % [m^3]
