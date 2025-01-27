@@ -83,9 +83,9 @@ for idx = 1:length(alpha_values)
     % 确保台阶高度非负
     H_step = max(H_step, 0);
 
-    % 更新高度范围
-    min_height = min(min_height, min(H_step(:)));
-    max_height = max(max_height, max(H_step(:)));
+    min_val = min(H_step(:));
+    max_val = max(H_step(:));
+    c_range = [min_val, max_val];
 
     % 自定义颜色图，将最高值设置为大理石颜色
     custom_colormap = parula(256);
@@ -96,10 +96,9 @@ for idx = 1:length(alpha_values)
     subplot(2, 2, idx);
     surf(X, Y, H_step);
     colorbar;
-    caxis([min_height, max_height]);
     shading interp;
     colormap(custom_colormap);
-    title(['Upward Ratio: ', num2str(alpha)]);
+    title(['Upward Ratio: ', num2str(alpha)], 'FontSize', 14);
     xlabel('Step Length (m)');
     ylabel('Step Width (m)');
     zlabel('Step Height (m)');
@@ -111,10 +110,9 @@ for idx = 1:length(alpha_values)
     subplot(2, 2, idx+2);
     surf(X, Y, H_step);
     colorbar;
-    caxis([min_height, max_height]);
     shading interp;
     colormap(custom_colormap);
-    title(['Upward Ratio: ', num2str(alpha)]);
+    title(['view xOy'], 'FontSize', 14);
     xlabel('Step Length (m)');
     ylabel('Step Width (m)');
     zlabel('Step Height (m)');

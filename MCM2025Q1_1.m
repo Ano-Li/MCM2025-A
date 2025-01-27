@@ -66,6 +66,30 @@ disp(table(V_measured', f_steps_per_year', 'VariableNames', ...
 % disp(table(W_measured', f_steps_per_year', 'VariableNames', ...
 %            {'W', 'f'}));
 %%
-%画图
+
 plotmatrix = [V_measured;f_steps_per_year];
-pm_sorted = sort(V_measplotmatrixured); % 从小到大排序
+% 按第一行的值排序
+[sorted_row, sort_index] = sort(plotmatrix(1, :)); % 获取排序后的第一行及其索引
+pm_sorted = plotmatrix(:, sort_index); % 按索引对整个矩阵的列进行重排
+
+% 创建x轴索引
+x = 1:size(pm_sorted, 2);
+
+% 绘图
+figure;
+yyaxis right; % 右侧y轴用于柱状图
+bar(x, pm_sorted(2, :), 0.5, 'FaceColor', [0.2 0.6 0.8], 'EdgeColor', 'none'); % 柱状图颜色设为蓝色
+ylabel('steps per year');
+
+hold on; % 保持绘图状态
+yyaxis left; % 左侧y轴用于折线图
+plot(x, pm_sorted(1, :), '-o', 'LineWidth', 2, 'Color', [0.9 0.3 0.3], 'MarkerFaceColor', [1 0 0]); % 折线图颜色为红色
+ylabel('Volume of wear (m^3)');
+ylim([0,0.0038]);
+
+% 设置标签、标题和图例
+xlabel('different stairs');
+legend('steps per year', 'Volume of wear ', 'Location', 'northwest');
+% title('Combined Plot: V as Line and f as Bar');
+grid on;
+

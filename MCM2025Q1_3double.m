@@ -51,10 +51,6 @@ x = linspace(-Lx/2, Lx/2, Nx); % 台阶长度方向 -> 脚的宽度方向
 % 初始化台阶高度矩阵
 H_step = Lz * ones(Ny, Nx); % 台阶初始高度
 
-% 记录所有子图的高度范围
-min_height = 0;
-max_height = Lz;
-
 % 模拟脚踩行为
 num_steps = 1000; % 脚踩次数
 
@@ -95,11 +91,11 @@ for idx = 1:length(alpha_values)
     % 确保台阶高度非负
     H_step = max(H_step, 0);
 
-    % 更新高度范围
-    min_height = min(min_height, min(H_step(:)));
-    max_height = max(max_height, max(H_step(:)));
+    min_val = min(H_step(:));
+    max_val = max(H_step(:));
+    c_range = [min_val, max_val];
 
-    % 自定义颜色图，将最高值设置为大理石颜色
+       % 自定义颜色图，将最高值设置为大理石颜色
     custom_colormap = parula(256);
     marble_color = [0.9, 0.9, 0.9]; % 浅灰色
     custom_colormap(end, :) = marble_color;
@@ -108,10 +104,9 @@ for idx = 1:length(alpha_values)
     subplot(2, 2, idx);
     surf(X, Y, H_step);
     colorbar;
-    caxis([min_height, max_height]);
     shading interp;
     colormap(custom_colormap);
-    title(['Upward Ratio: ', num2str(alpha)]);
+    title(['Upward Ratio: ', num2str(alpha)], 'FontSize', 14);
     xlabel('Step Length (m)');
     ylabel('Step Width (m)');
     zlabel('Step Height (m)');
@@ -123,10 +118,9 @@ for idx = 1:length(alpha_values)
     subplot(2, 2, idx+2);
     surf(X, Y, H_step);
     colorbar;
-    caxis([min_height, max_height]);
     shading interp;
     colormap(custom_colormap);
-    title(['Upward Ratio: ', num2str(alpha)]);
+    title(['view xOy'], 'FontSize', 14);
     xlabel('Step Length (m)');
     ylabel('Step Width (m)');
     zlabel('Step Height (m)');
