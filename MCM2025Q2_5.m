@@ -1,8 +1,8 @@
 clear, clc, close all;
 fit_all=[];
 for idx = 1:6
-file_name = ['old-stairs-1_stairs-0',num2str(idx),'.mat'];
-% file_name = ['stairs-of-the-17th-century_stairs-0', num2str(idx), '.mat'];
+% file_name = ['old-stairs-1_stairs-0',num2str(idx),'.mat'];
+file_name = ['stairs-of-the-17th-century_stairs-0', num2str(idx), '.mat'];
 load(file_name); 
 Wear = Wear - min(Wear, [], 'all');
 % 矩阵维度
